@@ -4,3 +4,4 @@ b_token.py
 git_token
 config/mongodb.py
 config/tgb_token.py
+tests.py
