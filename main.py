@@ -1,6 +1,6 @@
 # IMPORT VARIABLES #####################################################################################################
 from config.tgb_token import TELEGRAM_BOT_TOKEN
-from config.mongodb import mdb_USERNAME, mdb_PASSWORD
+from config.mongodb import *
 from keyboards import KB_LOGIN, KB_EXIT
 from person import get_username_list
 from message_texts import *
@@ -16,8 +16,6 @@ from aiogram.types import ReplyKeyboardMarkup, ReplyKeyboardRemove, KeyboardButt
 import logging
 import requests
 from asyncio import sleep
-
-
 ########################################################################################################################
 ########################################################################################################################
 
@@ -32,11 +30,11 @@ class ProfileStateGroup(StatesGroup):
 username_list, f_name_list, l_name_list = get_username_list()
 
 storage = MongoStorage(
-    host='172.16.11.136',  # "127.0.0.1",
-    port=27017,
-    db_name='aiogram_fsm',
+    host=mdb_HOST,
+    port=mdb_PORT,
     username=mdb_USERNAME,
     password=mdb_PASSWORD,
+    db_name=mdb_DBNAME,
 )
 
 logging.basicConfig(level=logging.DEBUG)
