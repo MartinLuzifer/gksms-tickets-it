@@ -10,12 +10,17 @@ from aiogram.contrib.fsm_storage.mongo import MongoStorage
 from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
-#############################################
+########################################################################################################################
 from aiogram.types import ReplyKeyboardMarkup, ReplyKeyboardRemove, KeyboardButton
 ########################################################################################################################
 import logging
 import requests
 from asyncio import sleep
+import datetime
+import json
+import os
+import random
+import hashlib
 ########################################################################################################################
 ########################################################################################################################
 
@@ -37,7 +42,7 @@ storage = MongoStorage(
     db_name=mdb_DBNAME,
 )
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.ERROR)
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
 dp = Dispatcher(bot, storage=storage)
 
@@ -90,14 +95,32 @@ async def get_phone_number(message: types.Message, state: FSMContext) -> None:
             phone_number = data['phone_number']
         ticket = message.text
 
+    try:
+        os.mkdir("answers")
+    except FileExistsError:
+        pass
+
+    m = hashlib.sha256()
+    m.update(f"{datetime.datetime.now()}---{random.randint(0, 900)}".encode())
+    random_symbols = m.hexdigest()
+    json_file_name = f"answers/answer-{datetime.datetime.now()}-№-{random_symbols}.json"
+
+    with open(json_file_name, 'w') as file:
         r = requests.get(
             f"http://172.16.11.143:3000/reqtg_by_phone?"
             f"phone={phone_number}&"
             f"title={title}&"
             f"description={ticket}"
         )
+        file.write(r.json())
 
-    await message.reply(text=r.json())
+    with open(json_file_name, 'r') as file:
+        json_file = json.load(file)
+        name = json_file.get('name')
+        surname = json_file.get('surname')
+        answer = json_file.get('answer')
+
+    await message.reply(text=f"Имя: {name} \nФамилия: {surname} \nОтвет: {answer}")
 
 
 @dp.message_handler(Text(equals='Войти в систему'))

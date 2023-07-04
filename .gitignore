@@ -1,7 +1,7 @@
 __pycache__
 venv
-b_token.py
+mongodb
+answers
 git_token
 config/mongodb.py
 config/tgb_token.py
-tests.py
