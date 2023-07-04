@@ -3,9 +3,11 @@
 export tgb_image_name="tgb-gksms-dev-tickets-it"
 export tgb_container_name='tgb'
 export args_not_found="ARGS NOT FOUND, USED:
-                START BOT ----> sh bot.sh start
-                STOP BOT -----> sh bot.sh stop
-                GET HELP -----> sh bot.sh help"
+                START BOT ----> ./bot.sh start
+                STOP BOT -----> ./bot.sh stop
+                GET HELP -----> ./bot.sh help
+
+                NOT RUN sh bot.sh start OR bash bot.sh start"
 
 if [ "$1" == 'start' ]; then
 
