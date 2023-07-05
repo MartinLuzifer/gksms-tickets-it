@@ -2,8 +2,10 @@
 from config.tgb_token import TELEGRAM_BOT_TOKEN
 from config.mongodb import *
 from keyboards import KB_LOGIN, KB_NAVIGATION, KB_EXIT
-from person import get_username_list
 from message_texts import *
+# IMPORT RESPONSES #####################################################################################################
+from responses.person import get_username_list
+from responses.tickets import get_active_tickets
 # AIOGRAM ##############################################################################################################
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.fsm_storage.mongo import MongoStorage
@@ -15,14 +17,12 @@ from aiogram.types import ReplyKeyboardMarkup, ReplyKeyboardRemove, KeyboardButt
 ########################################################################################################################
 import logging
 import requests
-from requests.auth import HTTPBasicAuth
 from asyncio import sleep
 import datetime
 import json
 import os
 import random
 import hashlib
-import xmltodict
 ########################################################################################################################
 ########################################################################################################################
 
@@ -60,15 +60,20 @@ async def get_phone_number(message: types.Message, state: FSMContext) -> None:
     """ После указания номера телефона юзверь отправляется в FSM 'phone' """
     await ProfileStateGroup.phone.set()
     async with state.proxy() as data:
-        data['phone_number'] = message.contact.phone_number
-        data['first_name'] = message.contact.first_name
-        data['last_name'] = message.contact.last_name
+        phone_number = data['phone_number'] = message.contact.phone_number
+        first_name = data['first_name'] = message.contact.first_name
+        last_name = data['last_name'] = message.contact.last_name
 
-    await message.answer(text=f'ваш номер: {data["phone_number"]}\nПишите проблемы ниже', reply_markup=KB_EXIT)
+    answer = f"Ваш номер: {phone_number}\n" \
+             f"Ваше имя в мессенджере: {first_name}\n" \
+             f"Ваша Фамилия в мессенджере: {last_name}\n" \
+             f"\nПишите проблемы ниже"
+
+    await message.answer(text=answer, reply_markup=KB_EXIT)
 
 
 @dp.message_handler(commands=['help'], state=ProfileStateGroup.phone)
-async def get_phone_number(message: types.Message, state: FSMContext) -> None:
+async def get_phone_number(message: types.Message) -> None:
     await message.reply(text=HELP_MESSAGE)
 
 
@@ -87,6 +92,16 @@ async def get_phone_number(message: types.Message, state: FSMContext) -> None:
 async def get_phone_number(message: types.Message, state: FSMContext) -> None:
     """ Передать список активных заявок пользователю """
 
+    async with state.proxy() as data:
+        first_name = data.get('first_name')
+        last_name = data.get('last_name')
+
+    tickets = get_active_tickets(first_name, last_name)
+
+    for ticket in tickets:
+        await message.answer(ticket)
+
+    '''
     with requests.session() as session:
         async with state.proxy() as data:
             f_name = data.get('first_name')
@@ -119,6 +134,7 @@ async def get_phone_number(message: types.Message, state: FSMContext) -> None:
                  f"Описание: {description}\n"
                  f"Статус: {status}"
         )
+    '''
 
 
 @dp.message_handler(Text(equals=KB_NAVIGATION.keyboard[1][0].text), state=ProfileStateGroup.phone)
@@ -170,12 +186,17 @@ async def get_phone_number(message: types.Message, state: FSMContext) -> None:
         answer = json_file.get('answer')
 
     async with state.proxy() as data:
+        """ 
+        ЭТО ЧАСТЬ КОСТЫЛЯ: 
+        Обновляет запись в субд, изменяя ФИ из телеграма на ФИ из ITOP, для получения списка тикетов в будущем
+        Потому что не у всех в телеге указаны настоящие имя и фамилия
+        """
         data['first_name'] = name
         data['last_name'] = surname
 
     await message.reply(text=f"Имя: {name} \nФамилия: {surname} \nОтвет: {answer}", reply_markup=KB_NAVIGATION)
 
-
+'''
 @dp.message_handler(Text(equals='Войти в систему'))
 async def get_ticket(message: types.Message) -> None:
     """
@@ -253,7 +274,7 @@ async def get_problem(message: types.Message, state: FSMContext) -> None:
 
     print(uri)
     # await state.finish()
-
+'''
 
 if __name__ == '__main__':
     executor.start_polling(dispatcher=dp, skip_updates=True)
