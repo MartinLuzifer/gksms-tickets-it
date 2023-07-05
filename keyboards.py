@@ -19,4 +19,4 @@ KB_NAVIGATION.add(BT_EXIT)
 
 ###################
 
-print(KB_LOGIN.keyboard[0][0].text)
+print(BT_MY_TICKETS.text)

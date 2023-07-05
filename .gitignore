@@ -2,7 +2,6 @@ __pycache__
 venv
 mongodb
 answers
-git_token
 config/mongodb.py
 config/tgb_token.py
 config/itop_cred.py
