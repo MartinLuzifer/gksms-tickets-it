@@ -1,7 +1,7 @@
 # IMPORT VARIABLES #####################################################################################################
 from config.tgb_token import TELEGRAM_BOT_TOKEN
 from config.mongodb import *
-from keyboards import KB_LOGIN, KB_EXIT
+from keyboards import KB_LOGIN, KB_NAVIGATION, KB_EXIT
 from person import get_username_list
 from message_texts import *
 # AIOGRAM ##############################################################################################################
@@ -15,12 +15,14 @@ from aiogram.types import ReplyKeyboardMarkup, ReplyKeyboardRemove, KeyboardButt
 ########################################################################################################################
 import logging
 import requests
+from requests.auth import HTTPBasicAuth
 from asyncio import sleep
 import datetime
 import json
 import os
 import random
 import hashlib
+import xmltodict
 ########################################################################################################################
 ########################################################################################################################
 
@@ -59,20 +61,67 @@ async def get_phone_number(message: types.Message, state: FSMContext) -> None:
     await ProfileStateGroup.phone.set()
     async with state.proxy() as data:
         data['phone_number'] = message.contact.phone_number
+        data['first_name'] = message.contact.first_name
+        data['last_name'] = message.contact.last_name
 
     await message.answer(text=f'ваш номер: {data["phone_number"]}\nПишите проблемы ниже', reply_markup=KB_EXIT)
+
+
+@dp.message_handler(commands=['help'], state=ProfileStateGroup.phone)
+async def get_phone_number(message: types.Message, state: FSMContext) -> None:
+    await message.reply(text=HELP_MESSAGE)
 
 
 @dp.message_handler(commands=['start'], state=ProfileStateGroup.phone)
 async def get_phone_number(message: types.Message, state: FSMContext) -> None:
     """ Если хочется сбросить state на 0 во время уже установленного состояния """
-    await state.finish()
-    await message.reply("Выполняется сброс состояния")
-    await sleep(1)  # можно удалить
-    await message.answer("Выполнено! \nВведите /start еще раз, чтобы начать заново")
+    try:
+        await state.finish()
+    except:  # скорее всего никогда не отработает
+        await message.answer("Не удалось выполнить сброс состояния")
+    else:
+        await message.answer("Выполненен сброс контекста! \nВведите /start еще раз, чтобы начать заново")
 
 
-@dp.message_handler(Text(equals=KB_EXIT.keyboard[0][0].text), state=ProfileStateGroup.phone)
+@dp.message_handler(Text(equals=KB_NAVIGATION.keyboard[0][0].text), state=ProfileStateGroup.phone)
+async def get_phone_number(message: types.Message, state: FSMContext) -> None:
+    """ Передать список активных заявок пользователю """
+
+    with requests.session() as session:
+        async with state.proxy() as data:
+            f_name = data.get('first_name')
+            l_name = data.get('last_name')
+        session.auth = HTTPBasicAuth('admin', '12gfWUIR#$')
+        session.headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64)'}
+        expression = f'SELECT UserRequest ' \
+                     f'FROM UserRequest ' \
+                     f'WHERE caller_id_friendlyname LIKE "{f_name} {l_name}"'
+        r = session.get(
+            url=f'http://172.16.13.5:4443/webservices/export-v2.php?'
+            f'format=xml&'
+            f'login_mode=basic&'
+            f'date_format=Y-m-d+H%3Ai%3As&'
+            f'expression={expression}'
+        )
+
+    response = xmltodict.parse(r.text)
+    user_requests = response['Set']['UserRequest']
+
+    for ticket in user_requests:
+        caller_id_friendlyname = ticket.get('caller_id_friendlyname')
+        ref = ticket.get('ref')
+        status = ticket.get('status')
+        description = ticket.get('description').replace("<p>", "").replace("</p>", "")
+
+        await message.reply(
+            text=f"ИМЯ: {caller_id_friendlyname}\n"
+                 f"Номер тикета: {ref}\n"
+                 f"Описание: {description}\n"
+                 f"Статус: {status}"
+        )
+
+
+@dp.message_handler(Text(equals=KB_NAVIGATION.keyboard[1][0].text), state=ProfileStateGroup.phone)
 async def get_phone_number(message: types.Message, state: FSMContext) -> None:
     """ Если пользователю хочется идентифицироваться заново, например: он сменил номер телефона """
     await state.finish()
@@ -120,7 +169,11 @@ async def get_phone_number(message: types.Message, state: FSMContext) -> None:
         surname = json_file.get('surname')
         answer = json_file.get('answer')
 
-    await message.reply(text=f"Имя: {name} \nФамилия: {surname} \nОтвет: {answer}")
+    async with state.proxy() as data:
+        data['first_name'] = name
+        data['last_name'] = surname
+
+    await message.reply(text=f"Имя: {name} \nФамилия: {surname} \nОтвет: {answer}", reply_markup=KB_NAVIGATION)
 
 
 @dp.message_handler(Text(equals='Войти в систему'))
