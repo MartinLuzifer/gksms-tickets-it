@@ -30,17 +30,16 @@ class ProfileStateGroup(StatesGroup):
     ticket_set_problem = State()
 
 
-storage = MongoStorage(
-    host=mdb_HOST,
-    port=mdb_PORT,
-    username=mdb_USERNAME,
-    password=mdb_PASSWORD,
-    db_name=mdb_DBNAME,
-)
-
 logging.basicConfig(level=logging.ERROR)
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
-dp = Dispatcher(bot, storage=storage)
+dp = Dispatcher(
+    bot=bot,
+    storage=MongoStorage(
+        host=mdb_HOST, port=mdb_PORT,
+        username=mdb_USERNAME, password=mdb_PASSWORD,
+        db_name=mdb_DBNAME
+    )
+)
 
 
 @dp.message_handler(commands=['start'])
