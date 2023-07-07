@@ -1,5 +1,0 @@
-mdb_PORT = 27017
-mdb_HOST = ''
-mdb_USERNAME = ''
-mdb_PASSWORD = ''
-mdb_DBNAME = ''
