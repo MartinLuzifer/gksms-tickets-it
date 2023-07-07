@@ -2,12 +2,23 @@
 
 # Настройка:
 
-1. Зайти в каталог `./config` и переименовать файлы `*.py.example` в `*.py`  
-2. Заполнить поля конфигурационных файлов корректными данными
+1. Переименовать каталог `config_example` в `config`  
+2. В файле `config/tgb_token.py` указать токен вашего бота
+3. В файле `config/itop_cred.py` указать логин и пароль от сервера itop
+4. В файле `config/mongodb.py` указать логин и пароль от субд
+   - Указать такой же пароль в файле `docker-compose.yml`)
+   ```yaml
+   ...    
+   environment:
+     MONGO_INITDB_ROOT_USERNAME: root
+     MONGO_INITDB_ROOT_PASSWORD: gfWUIR
+   ...
+   ```
 
+   
 # Запуск
 
-1. Установить необходимые компененты
+1. Установить необходимые компоненты
 
        sudo apt update 
        sudo apt install -y git docker.io docker-compose
@@ -16,18 +27,6 @@
 
        sudo git clone https://github.com/MartinLuzifer/gksms-tickets-it.git
 
-3. Запустить контейнер `mongodb`, используя файл `mongodb.yml` 
+3. Запустить бота и mongodb
 
-       sudo docker-compose -f mongodb.yml up -d
-
-4. Дать права на исполнение для bash-скрипта
-
-       chmod +x ./bot.sh
-
-5. Запустить бота через bash-скрипт `bot.sh`. Будет создан образ и запущен контейнер
-
-       sudo ./bot.sh start
-
-6. Остановить бота. Будет остановлен и удален контейнер и удалится образ
-
-       sudo ./bot.sh stop
+       sudo docker-compose up -d
