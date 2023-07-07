@@ -5,8 +5,6 @@ services:
     image: mongo
     restart: always
     container_name: tgb-mongodb
-    ports:
-      - "27017:27017"
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: gfWUIR
@@ -15,8 +13,7 @@ services:
 
   tgb:
     image: tgb
-    build:
-      dockerfile: ./Dockerfile
+    build: .
     container_name: tgb-tgb
     restart: always
     volumes:

@@ -30,7 +30,7 @@ class ProfileStateGroup(StatesGroup):
     ticket_set_problem = State()
 
 
-logging.basicConfig(level=logging.ERROR)
+logging.basicConfig(level=logging.DEBUG)
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
 dp = Dispatcher(
     bot=bot,
