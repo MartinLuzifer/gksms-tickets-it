@@ -23,12 +23,14 @@ ${nc}
 if [ "$1" == 'start' ]; then
 
   echo "$1" && \
+  sudo docker-compose -f mongodb.yml up -d && \
   sudo docker build -t $tgb_image_name . && \
   sudo docker run -d --name $tgb_container_name $tgb_image_name
 
 elif [ "$1" == 'stop' ]; then
 
   echo "$1" && \
+  sudo docker-compose -f mongodb.yml down && \
   sudo docker container stop $tgb_container_name && \
   sudo docker container rm $tgb_container_name && \
   sudo docker image rm $tgb_image_name
