@@ -15,6 +15,10 @@ def get_active_tickets(f_name, l_name) -> list:
                      f'FROM UserRequest ' \
                      f'WHERE caller_id_friendlyname LIKE "{f_name} {l_name}" '
 
+        expression = f'SELECT UserRequest ' \
+                     f'FROM UserRequest ' \
+                     f'WHERE caller_id_friendlyname LIKE "{f_name} {l_name}" AND status != "closed" '
+
         r = session.get(
             url=f'{ITOP_URL}/webservices/export-v2.php?'
                 f'format=xml&'
